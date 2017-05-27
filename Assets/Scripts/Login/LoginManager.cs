@@ -1,4 +1,4 @@
-﻿using Data;
+﻿using Services;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -8,7 +8,7 @@ namespace Login
 	public class LoginManager : MonoBehaviour
 	{
 		[SerializeField]
-		private string mainScene;
+		private int mainScene;
 		[SerializeField]
 		private InputField username;
 

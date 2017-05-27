@@ -8,11 +8,11 @@ namespace UnityRest
 {
     public class UnityRestRequest
     {
-        private Dictionary<string, string> headers;
         private string baseUrl;
         private string endpoint;
         private ObjectId id;
-        private string body;
+        private Dictionary<string, string> body;
+        private Dictionary<string, string> headers;
         private HttpVerb verb;
         private ResponseParser responseHandler;
         private Action onResult;
@@ -29,7 +29,28 @@ namespace UnityRest
 
         public UnityRestRequest WithBody (string body)
         {
-            this.body = body;
+            body = body.Trim('{', '}');
+
+            string[] bodySplit = body.Split(',');
+
+            Dictionary<string, string> values = new Dictionary<string, string>();
+
+            for (int i = 0; i < bodySplit.Length; i++)
+            {
+                string key = bodySplit[i].Split(':')[0];
+                string onevalue = bodySplit[i].Split(':')[1];
+
+                key = key.Replace('"', ' ');
+                key = key.Trim();
+
+                onevalue = onevalue.Replace('"', ' ');
+                onevalue = onevalue.Trim();
+
+                values.Add(key, onevalue);
+            }
+
+            this.body = values;
+
             return this;
         }
 
@@ -83,10 +104,13 @@ namespace UnityRest
         internal IEnumerator SendRoutine ()
         {
             string url = BuildURL ();
+
             UnityWebRequest internalRequest = BuildInternalRequest (url);
+
             if (headers != null)
                 SetHeaders (internalRequest);
             yield return internalRequest.Send ();
+
             HandleResult (internalRequest);
         }
 
@@ -96,8 +120,10 @@ namespace UnityRest
             {
                 case HttpVerb.Get:
                     return UnityWebRequest.Get (url);
+
                 case HttpVerb.Post:
                     return UnityWebRequest.Post (url, body);
+
                 default:
                     return null;
             }
@@ -106,6 +132,7 @@ namespace UnityRest
         private string BuildURL ()
         {
             string url = string.Format ("{0}/{1}", baseUrl, endpoint);
+
             if (id != null)
                 url = string.Format ("{0}/{1}", url, id.value);
             return url;
@@ -114,7 +141,9 @@ namespace UnityRest
         private void SetHeaders (UnityWebRequest request)
         {
             foreach (string name in headers.Keys)
-                request.SetRequestHeader (name, headers[name].ToString ());
+            {
+                request.SetRequestHeader(name, headers[name].ToString());
+            }
         }
 
         private void HandleResult (UnityWebRequest request)
